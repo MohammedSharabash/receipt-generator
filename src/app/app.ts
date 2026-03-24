@@ -26,6 +26,7 @@ const TEMPLATE_HEIGHT = 3393;
 const FONT_SIZE = 125;
 const H_SCALE = 0.8;
 const V_SCALE = 0.6;
+const LETTER_SPACING = 12;
 
 @Component({
   selector: 'app-root',
@@ -210,7 +211,7 @@ export class App implements AfterViewChecked {
     const ctx = canvas.getContext('2d')!;
     ctx.drawImage(this.templateImg!, 0, 0);
 
-    ctx.fillStyle = '#cc0000';
+    ctx.fillStyle = '#fa3827';
     ctx.font = `bold ${FONT_SIZE}px Andalus, Arial`;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'right';
@@ -225,7 +226,14 @@ export class App implements AfterViewChecked {
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.scale(H_SCALE, V_SCALE);
-        ctx.fillText(num, 0, 0);
+        // Draw each character individually with spacing (RTL for Arabic)
+        const chars = [...num];
+        let xOffset = 0;
+        for (let c = 0; c < chars.length; c++) {
+          const charWidth = ctx.measureText(chars[c]).width;
+          ctx.fillText(chars[c], xOffset, 0);
+          xOffset -= (charWidth + LETTER_SPACING);
+        }
         ctx.restore();
       }
     }
