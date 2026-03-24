@@ -1,0 +1,140 @@
+<div class="app-container" dir="rtl">
+  <header>
+    <h1>مولد أرقام الإيصالات</h1>
+    <p class="subtitle">إنشاء إيصالات بأرقام تسلسلية تلقائياً</p>
+  </header>
+
+  <div class="controls-section">
+    <div class="tabs">
+      <button [class.active]="inputMode === 'manual'" (click)="inputMode = 'manual'">
+        إدخال يدوي
+      </button>
+      <button [class.active]="inputMode === 'image'" (click)="inputMode = 'image'">
+        من صورة مكتوبة بالخط
+      </button>
+    </div>
+
+    <!-- Increment count - shared between both modes -->
+    <div class="increment-input">
+      <label>عدد التكرارات (الزيادة):</label>
+      <input type="number" [(ngModel)]="incrementCount" min="1" max="1000" placeholder="100" />
+      <span class="hint">كل رقم هيزيد 1 في كل تكرار</span>
+    </div>
+
+    @if (inputMode === 'manual') {
+      <div class="manual-input">
+        <div class="input-row">
+          <label>أدخل الأرقام الأساسية (كل رقم في سطر جديد):</label>
+          <textarea
+            [(ngModel)]="manualNumbers"
+            rows="10"
+            placeholder="مثال:&#10;916901&#10;918101&#10;918201&#10;&#10;كل 3 أرقام = صفحة واحدة&#10;هيتم تكرارها بالزيادة تلقائياً"
+            dir="ltr"
+          ></textarea>
+        </div>
+        <button class="btn-primary" (click)="processManualInput()">
+          إنشاء الإيصالات
+        </button>
+      </div>
+    }
+
+    @if (inputMode === 'image') {
+      <div class="image-input">
+        @if (!uploadedImage) {
+          <label>ارفع صورة الأرقام المكتوبة بالخط:</label>
+          <div class="upload-area" (click)="fileInput.click()" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+            <div class="upload-placeholder">
+              <span class="upload-icon">📷</span>
+              <span>اضغط هنا أو اسحب الصورة</span>
+            </div>
+          </div>
+        }
+
+        @if (uploadedImage) {
+          <div class="image-workspace">
+            <div class="image-panel" [class.zoomed]="imageZoom">
+              <div class="image-toolbar">
+                <span>الصورة المرفوعة</span>
+                <div class="toolbar-btns">
+                  <button class="btn-tool" (click)="toggleZoom()">
+                    {{ imageZoom ? '🔍-' : '🔍+' }}
+                  </button>
+                  <button class="btn-tool btn-remove" (click)="removeImage()">✕</button>
+                </div>
+              </div>
+              <div class="image-scroll">
+                <img [src]="uploadedImage" [class.zoom-full]="imageZoom" />
+              </div>
+            </div>
+            <div class="numbers-panel">
+              <label>الأرقام المستخرجة (يمكنك تعديلها):</label>
+              @if (isOcrProcessing) {
+                <div class="ocr-status">
+                  <div class="spinner"></div>
+                  <span>{{ ocrStatus }}</span>
+                </div>
+              }
+              <textarea
+                [(ngModel)]="extractedNumbers"
+                rows="15"
+                dir="ltr"
+                placeholder="اكتب الأرقام هنا...&#10;مثال:&#10;916901&#10;918101&#10;918201"
+              ></textarea>
+              <button class="btn-primary" (click)="processExtractedNumbers()">
+                إنشاء الإيصالات
+              </button>
+            </div>
+          </div>
+        }
+
+        <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+      </div>
+    }
+  </div>
+
+  @if (pageGroups.length > 0) {
+    <div class="output-section">
+      <div class="output-header">
+        <div class="output-info">
+          <h2>الإيصالات المُنشأة</h2>
+          <p class="output-stats">
+            {{ pageGroups.length }} نموذج صفحة &times; {{ incrementCount }} تكرار = {{ totalImages }} صورة
+          </p>
+        </div>
+        <div class="actions">
+          <button class="btn-download-all" (click)="downloadAll()" [disabled]="isGenerating">
+            @if (isGenerating) {
+              <span class="generating">جارٍ الإنشاء... {{ generateProgress }}%</span>
+              <div class="progress-bar-inline">
+                <div class="progress-fill" [style.width.%]="generateProgress"></div>
+              </div>
+            } @else {
+              تحميل الكل (ZIP)
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="pages-grid">
+        @for (group of pageGroups; track $index) {
+          <div class="page-card">
+            <div class="page-header">
+              <span>نموذج {{ $index + 1 }}</span>
+              <span class="page-numbers">{{ group.baseNumbers.join(' - ') }}</span>
+            </div>
+            <div class="page-meta">
+              {{ incrementCount }} نسخة: من {{ group.pages[0].numbers.join(', ') }} إلى {{ group.pages[group.pages.length - 1].numbers.join(', ') }}
+            </div>
+            <canvas
+              [id]="'canvas-' + $index"
+              class="page-canvas"
+            ></canvas>
+            <button class="btn-download" (click)="downloadPage($index)">
+              تحميل النموذج الأول
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
