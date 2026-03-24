@@ -226,8 +226,8 @@ export class App implements AfterViewChecked {
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.scale(H_SCALE, V_SCALE);
-        // Draw each character individually with spacing (RTL for Arabic)
-        const chars = [...num];
+        // Draw each character individually with spacing (reverse for RTL positioning)
+        const chars = [...num].reverse();
         let xOffset = 0;
         for (let c = 0; c < chars.length; c++) {
           const charWidth = ctx.measureText(chars[c]).width;
